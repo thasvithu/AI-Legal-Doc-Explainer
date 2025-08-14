@@ -1,0 +1,2 @@
+ipykernel # for Jupyter Notebook kernel support
+PyMuPDF # for PDF processing
