@@ -254,3 +254,82 @@ This application provides AI‑generated assistance and risk heuristics. It does
 Bookmark, share, or extend it for your own compliance / contract intelligence workflows!
 
 </div>
+
+---
+
+## 🚀 Deploy on Hugging Face Spaces
+
+You can deploy this Streamlit app as a Space in a few minutes.
+
+### 1. Prepare Repository
+Ensure the following files are present (already included):
+* `app.py` (entrypoint)
+* `requirements.txt` (pinned dependencies)
+* `runtime.txt` (optional – specify Python version, e.g. `python-3.10`)
+* `README.md` (project description – shows on Space page)
+
+Create a `runtime.txt` (example):
+```
+python-3.10
+```
+
+### 2. Create a New Space
+1. Go to https://huggingface.co/spaces and click New Space.  
+2. Select SDK = Streamlit.  
+3. Choose a name (e.g. `your-username/legal-doc-explainer`).  
+4. Set visibility (Public or Private).  
+5. Create Space.
+
+### 3. Push Code
+If using Git locally:
+```bash
+git remote add hf https://huggingface.co/spaces/<username>/legal-doc-explainer
+git push hf main
+```
+
+Or upload files directly in the Space UI.
+
+### 4. Configure Gemini Key (Optional)
+In the Space page: Settings → Variables & secrets → Add:
+* Key: `GEMINI_API_KEY`
+* Value: your API key
+
+Without this key the app still works (heuristic summaries + extractive Q&A fallback).
+
+### 5. Build & Run
+The Space will auto-build: install requirements → launch Streamlit.  
+Entry command defaults to:
+```
+streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+```
+If needed, set this explicitly in the Space Settings > App File (point to `app.py`).
+
+### 6. Test
+Upload a sample PDF and verify:
+* Summary renders
+* Key clauses populate
+* Risk index appears
+* Q&A works (with or without Gemini)
+* Downloads succeed
+
+### 7. (Optional) Persistence
+Current design uses ephemeral FAISS indexes. To persist across sessions, adapt `embed_store.py` to disable `ephemeral=True` and commit the `faiss_legal_index/` directory (not recommended for sensitive docs).
+
+### 8. Troubleshooting
+| Symptom | Fix |
+|---------|-----|
+| Space stuck on "Building" | Ensure Python version in `runtime.txt` is supported; keep dependency versions pinned |
+| Module import error for `google.generativeai` | Ensure it’s in `requirements.txt` (already included) |
+| App shows offline heuristic message | Add `GEMINI_API_KEY` secret |
+| Memory errors on large PDFs | Reduce chunk size / increase overlap modestly |
+
+### Minimal Fileset Example
+```
+app.py
+modules/ (code)
+utils/
+requirements.txt
+runtime.txt
+README.md
+LICENSE
+```
