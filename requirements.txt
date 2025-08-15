@@ -1,2 +1,10 @@
 ipykernel # for Jupyter Notebook kernel support
 PyMuPDF # for PDF processing
+google-generativeai # for accessing Google Generative AI
+python-dotenv # for loading environment variables
+langchain # for building language model applications
+langchain-community # for community-contributed Langchain components
+sentence-transformers # for sentence embeddings
+faiss-cpu # for efficient similarity search
+streamlit # for building web applications
+langchain-huggingface # for Hugging Face integration with Langchain
