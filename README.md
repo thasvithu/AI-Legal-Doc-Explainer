@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div align="center">
 
 # ⚖️ AI Legal Document Explainer
@@ -333,3 +334,18 @@ runtime.txt
 README.md
 LICENSE
 ```
+=======
+---
+title: Legal Doc Explainer
+emoji: 📚
+colorFrom: yellow
+colorTo: gray
+sdk: gradio
+sdk_version: 5.42.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+>>>>>>> 2dcd28af771df9f497e1fd81067d872fdd6df673
