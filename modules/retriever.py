@@ -25,7 +25,6 @@ def load_faiss_index(path: str, model_name: str = "BAAI/bge-small-en-v1.5") -> F
     """
     try:
         embeddings_model = HuggingFaceEmbeddings(model_name=model_name)
-        # allow_dangerous_deserialization=True needed if pickle is used (LangChain >=0.2 pattern)
         db = FAISS.load_local(path, embeddings_model, allow_dangerous_deserialization=True)
         print("FAISS index loaded successfully!")
         return db

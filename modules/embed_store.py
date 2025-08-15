@@ -1,48 +1,113 @@
 import warnings
 try:
     # Preferred (no deprecation warning if package installed)
-    from langchain_huggingface import HuggingFaceEmbeddings  # type: ignore
-except ImportError:  # pragma: no cover
+    from langchain_huggingface import HuggingFaceEmbeddings  
+except ImportError:  
     # Fallback for environments where migration not yet done
-    from langchain_community.embeddings import HuggingFaceEmbeddings  # type: ignore
+    from langchain_community.embeddings import HuggingFaceEmbeddings
     warnings.filterwarnings(
         "ignore",
         message=r"The class `HuggingFaceEmbeddings` was deprecated",
         category=Warning,
     )
+from pathlib import Path
 from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
-from typing import List
+from typing import List, Tuple, Optional, Callable
 from utils.exception import CustomException
 import os
+import atexit
+import shutil
+from threading import Lock
 
 
-def embed_and_store_documents(chunks: List[Document], model_name: str = "BAAI/bge-small-en-v1.5"):
-    """
-    Generate embeddings for text chunks and store them in a FAISS vector store.
+def _project_root() -> Path:
+    """Return project root (directory containing this file's parent)."""
+    return Path(__file__).resolve().parent.parent
+
+
+def get_index_dir(name: str = "faiss_legal_index") -> Path:
+    """Return (and ensure) the persistent directory used to store FAISS index files."""
+    idx_dir = _project_root() / name
+    idx_dir.mkdir(parents=True, exist_ok=True)
+    return idx_dir
+
+
+def embed_and_store_documents(
+    chunks: List[Document],
+    model_name: str = "BAAI/bge-small-en-v1.5",
+    index_dir_name: str = "faiss_legal_index",
+    ephemeral: bool = False,
+) -> Optional[Tuple[FAISS, Path, Optional[Callable[[], None]]]]:
+    """Generate embeddings for text chunks and store them.
 
     Args:
-        chunks (List[Document]): List of Document objects (text chunks).
-        model_name (str): HuggingFace embedding model to use.
+        chunks: Documents to embed.
+        model_name: HF embedding model name.
+        index_dir_name: Folder name (ignored if ephemeral=True).
+        ephemeral: If True, store index in a temporary directory that can be deleted after session.
 
     Returns:
-        FAISS: FAISS vector store object.
+        (db, path, cleanup_fn) or None. cleanup_fn deletes the directory when called (only set if ephemeral True).
     """
     try:
-        # Initialize embedding model
-        embeddings_model = HuggingFaceEmbeddings(model_name=model_name)
+        if not chunks:
+            raise ValueError("No chunks provided to embed.")
 
-        # Create FAISS vector store from documents
+        embeddings_model = HuggingFaceEmbeddings(model_name=model_name)
         db = FAISS.from_documents(chunks, embeddings_model)
 
-        # Save FAISS index locally
-        save_path = os.path.join(os.getcwd(), "faiss_legal_index")
-        db.save_local(save_path)
-        print("FAISS index saved successfully!")
+        if ephemeral:
+            import tempfile
+            tmp_dir = Path(tempfile.mkdtemp(prefix="faiss_idx_"))
+            db.save_local(str(tmp_dir))
+            print(f"FAISS ephemeral index saved at: {tmp_dir}")
 
-        return db
+            # Track ephemeral directory globally for guaranteed cleanup on process exit
+            _EphemeralIndexRegistry.register(tmp_dir)
 
+            def _cleanup():  # closes over tmp_dir
+                _EphemeralIndexRegistry.unregister_and_delete(tmp_dir)
+
+            return db, tmp_dir, _cleanup
+        else:
+            index_dir = get_index_dir(index_dir_name)
+            db.save_local(str(index_dir))
+            print(f"FAISS index saved successfully at: {index_dir}")
+            return db, index_dir, None
     except Exception as e:
         print(CustomException(str(e)))
         return None
+
+
+# ----------------- Ephemeral registry -----------------
+class _EphemeralIndexRegistry:
+    _dirs: set[Path] = set()
+    _lock = Lock()
+    _atexit_registered = False
+
+    @classmethod
+    def register(cls, path: Path):
+        with cls._lock:
+            cls._dirs.add(path)
+            if not cls._atexit_registered:
+                atexit.register(cls.cleanup_all)
+                cls._atexit_registered = True
+
+    @classmethod
+    def unregister_and_delete(cls, path: Path):
+        with cls._lock:
+            if path in cls._dirs:
+                cls._dirs.remove(path)
+        shutil.rmtree(path, ignore_errors=True)
+        print(f"Ephemeral FAISS index deleted: {path}")
+
+    @classmethod
+    def cleanup_all(cls):  # pragma: no cover
+        with cls._lock:
+            dirs = list(cls._dirs)
+            cls._dirs.clear()
+        for d in dirs:
+            shutil.rmtree(d, ignore_errors=True)
+            print(f"Ephemeral FAISS index deleted at exit: {d}")
 
