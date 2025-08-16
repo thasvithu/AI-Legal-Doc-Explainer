@@ -15,6 +15,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
 from typing import List, Tuple, Optional, Callable
 from utils.exception import CustomException
+from utils.logger import logger
 import os
 import atexit
 import shutil
@@ -61,7 +62,7 @@ def embed_and_store_documents(
             import tempfile
             tmp_dir = Path(tempfile.mkdtemp(prefix="faiss_idx_"))
             db.save_local(str(tmp_dir))
-            print(f"FAISS ephemeral index saved at: {tmp_dir}")
+            logger.debug("Created ephemeral FAISS index at %s", tmp_dir)
 
             # Track ephemeral directory globally for guaranteed cleanup on process exit
             _EphemeralIndexRegistry.register(tmp_dir)
@@ -73,11 +74,11 @@ def embed_and_store_documents(
         else:
             index_dir = get_index_dir(index_dir_name)
             db.save_local(str(index_dir))
-            print(f"FAISS index saved successfully at: {index_dir}")
+            logger.info("Saved FAISS index to %s", index_dir)
             return db, index_dir, None
     except Exception as e:
-        print(CustomException(str(e)))
-        return None
+    logger.exception("Failed to build/save embeddings: %s", e)
+    return None
 
 
 # ----------------- Ephemeral registry -----------------
@@ -100,7 +101,7 @@ class _EphemeralIndexRegistry:
             if path in cls._dirs:
                 cls._dirs.remove(path)
         shutil.rmtree(path, ignore_errors=True)
-        print(f"Ephemeral FAISS index deleted: {path}")
+    logger.debug("Deleted ephemeral index %s", path)
 
     @classmethod
     def cleanup_all(cls):  # pragma: no cover
@@ -109,5 +110,5 @@ class _EphemeralIndexRegistry:
             cls._dirs.clear()
         for d in dirs:
             shutil.rmtree(d, ignore_errors=True)
-            print(f"Ephemeral FAISS index deleted at exit: {d}")
+            logger.debug("Ephemeral index cleaned at exit: %s", d)
 

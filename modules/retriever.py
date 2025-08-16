@@ -12,6 +12,7 @@ except ImportError:
 from langchain.schema import Document
 from langchain.vectorstores.base import VectorStoreRetriever
 from utils.exception import CustomException
+from utils.logger import logger
 
 def load_faiss_index(path: str, model_name: str = "BAAI/bge-small-en-v1.5") -> FAISS:
     """Load a locally saved FAISS index (newer LangChain requires embeddings arg).
@@ -25,11 +26,11 @@ def load_faiss_index(path: str, model_name: str = "BAAI/bge-small-en-v1.5") -> F
     """
     try:
         embeddings_model = HuggingFaceEmbeddings(model_name=model_name)
-        db = FAISS.load_local(path, embeddings_model, allow_dangerous_deserialization=True)
-        print("FAISS index loaded successfully!")
+    db = FAISS.load_local(path, embeddings_model, allow_dangerous_deserialization=True)
+    logger.debug("Loaded FAISS index from %s", path)
         return db
     except Exception as e:
-        print(CustomException(str(e)))
+    logger.error("FAISS load failed (%s): %s", path, e)
         return None
 
 
@@ -45,8 +46,7 @@ def create_retriever(faiss_db: FAISS, k: int = 5) -> VectorStoreRetriever:
         VectorStoreRetriever: Retriever object to use in QA chains.
     """
     try:
-        retriever = faiss_db.as_retriever(search_type="similarity", search_kwargs={"k": k})
-        return retriever
+    return faiss_db.as_retriever(search_type="similarity", search_kwargs={"k": k})
     except Exception as e:
-        print(CustomException(str(e)))
-        return None
+    logger.error("Retriever creation failed: %s", e)
+    return None
