@@ -19,6 +19,7 @@ This is a small, focused tool for reading a contract / agreement PDF and quickly
 * Key clause snippets grouped by category with a simple Typical / Atypical hint
 * Red flag list with severity and an overall risk index (0–100)
 * Basic contract metadata (effective date, parties, governing law, term length) via lightweight heuristics
+* Party obligations heuristic (modal verb scan; early prototype)
 * Retrieval‑augmented Q&A with source citations and a confidence bar
 * Downloadable JSON / text exports (full report, clauses, risks, summary)
 * No persistent storage by default – temp FAISS index auto‑cleans after short inactivity
@@ -48,7 +49,7 @@ Just a small keyword pattern list for now (e.g. “perpetual”, “unlimited li
 ## Project Layout
 
 ```
-app.py                # Streamlit UI (tabs: Summary, Clauses, Risks, Q&A, Export)
+app.py                # Streamlit UI (tabs: Summary, Clauses, Risks, Q&A, Export, Obligations)
 modules/
 	pdf_reader.py       # PDF -> pages (PyMuPDF)
 	splitter.py         # Recursive chunking
@@ -79,12 +80,16 @@ GEMINI_API_KEY=your_key_here
 ```
 Without it you still get summaries (heuristic) and Q&A (extractive fallback).
 
-## Hugging Face Space
+## Hugging Face Space / Demo
 
 1. Create a Space (SDK = streamlit).  
 2. Push this repo (include `runtime.txt` with `python-3.10`).  
 3. Add a secret `GEMINI_API_KEY` for richer answers (optional).  
-4. Open the Space, upload a sample PDF, test tabs, done.
+4. Open the Space, upload a sample PDF, test tabs, done.  
+
+Live Space: (placeholder – add URL)
+
+Demo Video: (placeholder – link to short walkthrough)
 
 ## Roadmap (Condensed)
 
@@ -113,9 +118,9 @@ Feel free to open a PR or issue. Improvements most welcome around retrieval qual
 
 MIT (see `LICENSE`).
 
-## Disclaimer
+## Disclaimer (Important)
 
-This tool is for informational assistance only. It is not legal advice. Get a qualified lawyer for any real decision.
+This tool provides AI‑generated assistance for exploring legal documents. It is **not** legal advice. Always consult a qualified lawyer before relying on any output.
 
 —
 

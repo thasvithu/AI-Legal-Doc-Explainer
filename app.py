@@ -12,6 +12,8 @@ from modules.analysis import (
     compute_similarity_confidence,
     compute_risk_index,
     refine_plain_language,
+    bulletize_summary,
+    extract_obligations,
 )
 from modules.session_manager import (
     register as register_session_cleanup,
@@ -22,6 +24,7 @@ import uuid
 import json
 from io import StringIO
 
+APP_VERSION = "0.3.0"  # TODO: increment when major features added
 st.set_page_config(page_title="AI Legal Doc Explainer", page_icon="⚖️", layout="wide")
 
 # -------------------- Custom CSS Theme --------------------
@@ -54,6 +57,10 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Sidebar disclaimer (competition compliance / clarity)
+with st.sidebar:
+    st.markdown("**Disclaimer:** This tool provides AI-generated assistance and is **not** a substitute for professional legal advice. Always consult a qualified lawyer for decisions.")
 
 st.markdown(
     """
@@ -133,8 +140,8 @@ if uploaded_file:
             low_ct = sum(1 for r in red_flags if r['severity'] == 'low')
 
             # Tabs for organized navigation
-            tab_summary, tab_clauses, tab_risks, tab_qa, tab_export = st.tabs(
-                ["📘 Summary", "🔍 Clauses", "⚠️ Risks", "💬 Q&A", "📥 Export"]
+            tab_summary, tab_clauses, tab_risks, tab_oblig, tab_qa, tab_export = st.tabs(
+                ["📘 Summary", "🔍 Clauses", "⚠️ Risks", "🧾 Obligations", "💬 Q&A", "📥 Export"]
             )
 
             with tab_summary:
@@ -204,6 +211,19 @@ if uploaded_file:
                                 <div style='margin-top:6px;font-size:0.8rem;color:#475569'>{rf['snippet']}</div>
                             </div>
                             """,
+                            unsafe_allow_html=True,
+                        )
+
+            with tab_oblig:
+                st.markdown("### Party Obligations (Heuristic Preview)")
+                st.caption("Prototype: scans for 'shall', 'must', 'agrees to', etc. TODO: add negotiation suggestions.")
+                obligations = extract_obligations(docs)
+                if not obligations:
+                    st.info("No obvious obligation sentences detected.")
+                else:
+                    for o in obligations:
+                        st.markdown(
+                            f"<div class='legal-card'><strong>{o['party']}</strong>: {o['obligation']}</div>",
                             unsafe_allow_html=True,
                         )
 
@@ -284,6 +304,6 @@ if uploaded_file:
             session_touch(session_id)
 
             st.markdown(
-                "<div class='footer-note'>© 2025 AI Legal Doc Explainer – Prototype for CodeStorm.AI. Not legal advice.</div>",
+                f"<div class='footer-note'>© 2025 AI Legal Doc Explainer v{APP_VERSION} – Prototype for CodeStorm.AI. Not legal advice.</div>",
                 unsafe_allow_html=True,
             )

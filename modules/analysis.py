@@ -4,6 +4,7 @@ from langchain.schema import Document
 import google.generativeai as genai
 from dotenv import load_dotenv
 from utils.exception import CustomException
+from .constants import RISK_KEYWORDS, CLAUSE_CATEGORIES  # centralized definitions
 
 load_dotenv()
 if os.getenv("GEMINI_API_KEY"):
@@ -15,41 +16,7 @@ try:
 except Exception:
     _model = None
 
-RISK_KEYWORDS = {
-    "penalty": "Potential penalty clause – check amounts and triggers.",
-    "terminate": "Termination terms – verify notice periods and conditions.",
-    "auto-renew": "Auto-renewal – ensure you know how to opt out.",
-    "renew": "Renewal terms – look for automatic extensions.",
-    "indemnify": "Indemnification – check scope of liability.",
-    "liability": "Liability limitation – confirm caps and exclusions.",
-    "warranty": "Warranty/guarantee terms – confirm duration and scope.",
-    "confidential": "Confidentiality obligations – check duration & carve-outs.",
-    "governing law": "Jurisdiction – ensure acceptable governing law.",
-    "exclusive": "Exclusivity – may restrict other partnerships.",
-    "non-compete": "Non-compete – evaluate scope & duration.",
-}
-
-# Clause categories (simple mapping; can be expanded)
-CLAUSE_CATEGORIES = {
-    "terminate": "Termination",
-    "termination": "Termination",
-    "penalty": "Penalty",
-    "auto-renew": "Renewal",
-    "renew": "Renewal",
-    "indemnify": "Indemnification",
-    "indemnification": "Indemnification",
-    "liability": "Liability",
-    "warranty": "Warranty",
-    "confidential": "Confidentiality",
-    "governing law": "Jurisdiction",
-    "jurisdiction": "Jurisdiction",
-    "exclusive": "Exclusivity",
-    "non-compete": "Non-Compete",
-    "payment": "Payment",
-    "fee": "Payment",
-    "intellectual property": "Intellectual Property",
-    "ownership": "Intellectual Property",
-}
+# NOTE: RISK_KEYWORDS & CLAUSE_CATEGORIES moved to constants.py to avoid duplication
 
 
 def summarize_documents(docs: List[Document], max_chars: int = 6000) -> str:
@@ -175,10 +142,15 @@ def compute_similarity_confidence(similarities: List[float], answer_text: str) -
 
 
 def compute_risk_index(red_flags: List[Dict[str, Any]], total_chars: int) -> Dict[str, Any]:
+    # Weighted count so high severity carries more influence.
     weights = {"high": 3, "medium": 2, "low": 1}
     raw = sum(weights.get(f.get("severity","low"),1) for f in red_flags)
     import math
+    # Length normalization: log10 keeps longer contracts from inflating raw counts linearly.
+    # Adding 1 inside log avoids log(0); max(50, total_chars) prevents tiny docs over-scaling.
     denom = max(1.0, math.log10(max(50, total_chars)/1000 + 1))
+    # Empirical scaling factor (14) chosen via quick manual calibration on sample docs
+    # to produce intuitive 0-100 distribution (can revisit with larger dataset).
     scaled = min(100, raw/denom * 14)
     level = ("Low" if scaled < 26 else "Moderate" if scaled < 56 else "Elevated" if scaled < 76 else "High")
     return {"index": round(scaled), "level": level}
@@ -199,3 +171,69 @@ def refine_plain_language(summary: str) -> str:
         return resp.text
     except Exception:
         return summary
+
+
+def bulletize_summary(summary: str, max_items: int = 10, numbered: bool = False) -> str:
+    """Convert a paragraph summary into a bullet or numbered list.
+    Attempts LLM formatting first, falls back to heuristic sentence split.
+    """
+    if _model:
+        style = "numbered" if numbered else "bullet"
+        prompt = f"Rewrite the following summary as {max_items} concise {style} points. Avoid redundancy.\n\nSUMMARY:\n{summary}"
+        try:
+            resp = _model.generate_content(prompt)
+            txt = resp.text.strip()
+            if '\n' in txt or '-' in txt:
+                return txt
+        except Exception:
+            pass
+    import re
+    parts = re.split(r'[\.\n]\s+', summary)
+    cleaned = []
+    seen = set()
+    for p in parts:
+        s = p.strip().lstrip('-•0123456789. ').strip()
+        if len(s) < 8:
+            continue
+        low = s.lower()
+        if low in seen:
+            continue
+        seen.add(low)
+        cleaned.append(s)
+        if len(cleaned) >= max_items:
+            break
+    bullets = []
+    for i, item in enumerate(cleaned, start=1):
+        prefix = f"{i}. " if numbered else "- "
+        bullets.append(prefix + item)
+    return "\n".join(bullets) if bullets else "- (No salient points extracted)"
+
+
+def extract_obligations(docs: List[Document], max_items: int = 15) -> List[Dict[str, str]]:
+    """Initial heuristic pass at obligations.
+
+    Looks for sentences with modal / duty phrases. This is intentionally simple to
+    demonstrate feature direction. TODO: add LLM normalization + role attribution.
+    """
+    import re
+    duty_phrases = [r"\bshall\b", r"\bmust\b", r"\bis required to\b", r"\bagrees to\b", r"\bresponsible for\b"]
+    pattern = re.compile(r"(.{0,220}?(?:" + "|".join(duty_phrases) + r").{0,260}?[\.;])", re.IGNORECASE)
+    combined = "\n".join(d.page_content for d in docs)
+    matches = pattern.findall(combined)
+    out: List[Dict[str, str]] = []
+    seen = set()
+    for sent in matches:
+        clean = ' '.join(sent.split())
+        low = clean.lower()
+        if low in seen:
+            continue
+        seen.add(low)
+        party = 'Unspecified'
+        if re.search(r"(licensor|supplier|landlord)", low):
+            party = 'Supplier'
+        elif re.search(r"(licensee|customer|tenant)", low):
+            party = 'Customer'
+        out.append({"party": party, "obligation": clean[:500]})
+        if len(out) >= max_items:
+            break
+    return out
