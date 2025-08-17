@@ -22,49 +22,59 @@ st.set_page_config(page_title="AI Legal Doc Explainer", layout="wide", page_icon
 
 # Global aesthetic enhancements injected once
 if 'theming_loaded' not in st.session_state:
-        st.session_state.theming_loaded = True
-        st.markdown(
+    st.session_state.theming_loaded = True
+    st.markdown(
                 """
-                <style>
-                /* Root palette */
-                :root {
-                    --pri:#6a5acd; --pri-grad:linear-gradient(135deg,#6a5acd,#8f7bff);
-                    --accent:#ffb347; --danger:#ff4b4b; --bg1:#0f1117; --bg2:#161c23; --panel:#1d2530; --border:#263040;
-                }
-                body, .stApp { background: var(--bg1); }
-                header[data-testid="stHeader"] { background: rgba(0,0,0,0); }
-                /* Hero banner */
-                .hero { padding: 1.1rem 1.5rem 0.9rem 1.5rem; margin:-1rem -1rem 1rem -1rem; background:radial-gradient(circle at 25% 15%, #223045, #0f1117 70%); border-bottom:1px solid var(--border); }
-                .hero h1 { font-size:1.9rem; background:var(--pri-grad); -webkit-background-clip:text; color:transparent; margin:0; font-weight:700; letter-spacing:.5px; }
-                .hero p { color:#b5c1d1; margin:.4rem 0 0 0; font-size:.85rem; }
-                /* Buttons */
-                div[data-testid="stSidebar"] button, .stButton>button { background:var(--pri-grad)!important; border:0!important; color:#fff!important; font-weight:600!important; box-shadow:0 2px 6px -2px #000!important; }
-                .stButton>button:hover { filter:brightness(1.07); }
-                /* File uploader tweak */
-                .stFileUploader { background:var(--panel); padding:.5rem .75rem; border:1px solid var(--border); border-radius:10px; }
-                /* Tabs active underline */
-                button[data-baseweb="tab"] { font-weight:600; }
-                button[aria-selected="true"][data-baseweb="tab"] { border-bottom:3px solid var(--accent); }
-                /* Animated spinner overlay update (override default subtle) */
-                .stSpinner > div { border-top-color: var(--accent); }
-                /* Download button adjustments */
-                .stDownloadButton>button { background:var(--pri-grad); border:0; }
-                /* Small legal notice */
-                .legal-footer { text-align:center; padding:.75rem 0 2rem 0; font-size:.65rem; color:#6f7a89; }
-                /* Glass panels (future use) */
-                .glass { background:rgba(255,255,255,0.03); backdrop-filter: blur(8px); }
-                </style>
-                <script>
-                // Simple fade-in
-                document.addEventListener('DOMContentLoaded', ()=>{ document.body.classList.add('app-ready'); });
-                </script>
-                <div class='hero'>
-                    <h1>⚖️ AI Legal Doc Explainer</h1>
-                    <p>Contract intelligence: summaries • key clauses • risk flags • grounded Q&A • exportable audit report.</p>
-                </div>
-                """,
+                                <style>
+                                /* Root palette defaults (dark) */
+                                :root {
+                                        --pri:#6a5acd; --pri-grad:linear-gradient(135deg,#6a5acd,#8f7bff);
+                                        --accent:#ffb347; --danger:#ff4b4b;
+                                        --bg1:#0f1117; --bg2:#161c23; --panel:#1d2530; --border:#263040;
+                                        --text:#e6e9ef; --text-soft:#b5c1d1;
+                                }
+                                @media (prefers-color-scheme: light) {
+                                    :root {
+                                        --bg1:#f7f9fc; --bg2:#ffffff; --panel:#ffffff; --border:#dbe2ec;
+                                        --text:#1c2330; --text-soft:#5a6675;
+                                    }
+                                    body.light .hero { background:radial-gradient(circle at 25% 15%, #ffffff, #eef2f8 70%) !important; }
+                                }
+                                body, .stApp { background: var(--bg1); color: var(--text); }
+                                header[data-testid="stHeader"] { background: rgba(0,0,0,0); }
+                                /* Hero banner (will adapt via media query overrides) */
+                                .hero { padding: 1.1rem 1.5rem 0.9rem 1.5rem; margin:-1rem -1rem 1rem -1rem; background:radial-gradient(circle at 25% 15%, #223045, #0f1117 70%); border-bottom:1px solid var(--border); }
+                                .hero h1 { font-size:1.9rem; background:var(--pri-grad); -webkit-background-clip:text; color:transparent; margin:0; font-weight:700; letter-spacing:.5px; }
+                                .hero p { color:var(--text-soft); margin:.4rem 0 0 0; font-size:.85rem; }
+                                /* Buttons */
+                                div[data-testid="stSidebar"] button, .stButton>button { background:var(--pri-grad)!important; border:0!important; color:#fff!important; font-weight:600!important; box-shadow:0 2px 6px -2px #000!important; }
+                                .stButton>button:hover { filter:brightness(1.07); }
+                                /* File uploader tweak */
+                                .stFileUploader { background:var(--panel); padding:.5rem .75rem; border:1px solid var(--border); border-radius:10px; }
+                                /* Tabs active underline */
+                                button[data-baseweb="tab"] { font-weight:600; }
+                                button[aria-selected="true"][data-baseweb="tab"] { border-bottom:3px solid var(--accent); }
+                                /* Spinner */
+                                .stSpinner > div { border-top-color: var(--accent); }
+                                /* Download button */
+                                .stDownloadButton>button { background:var(--pri-grad); border:0; }
+                                /* Legal notice */
+                                .legal-footer { text-align:center; padding:.75rem 0 2rem 0; font-size:.65rem; color:var(--text-soft); }
+                                /* Glass panels */
+                                .glass { background:rgba(255,255,255,0.03); backdrop-filter: blur(8px); }
+                                </style>
+                                <script>
+                                // Add class for light/dark detection so we can scope extra overrides if needed
+                                const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+                                if (prefersLight) { document.body.classList.add('light'); }
+                                </script>
+                                <div class='hero'>
+                                        <h1>⚖️ AI Legal Doc Explainer</h1>
+                                        <p>Contract intelligence: summaries • key clauses • risk flags • grounded Q&A • exportable audit report.</p>
+                                </div>
+                                """,
                 unsafe_allow_html=True,
-        )
+    )
 sidebar_state = sidebar(config)
 
 if 'documents' not in st.session_state:
