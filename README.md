@@ -43,6 +43,34 @@ If `GOOGLE_API_KEY` missing or `USE_GEMINI=false`, fallback model is used.
 If large model load fails on Windows (DLL / pyarrow / sklearn errors), set `LOCAL_LLM_SMALL=true` to force a lightweight CPU model (distilgpt2) or provide a Gemini key for higher quality.
 If embedding model import fails (transformers / sentence-transformers issues), set `DISABLE_HF_EMBED=true` to use a hashing fallback (reduced semantic quality but functional for testing).
 
+## Streamlit Cloud Deploy
+1. Push repo to GitHub (this branch).
+2. Go to https://share.streamlit.io -> New App -> select repo -> `app.py`.
+3. Add secrets (Settings -> Secrets) like:
+```
+GOOGLE_API_KEY="your_key_optional"
+USE_GEMINI="true"
+LOCAL_LLM_SMALL="true"
+EMBED_MODEL="intfloat/e5-small-v2"
+CONFIDENCE_THRESHOLD="65"
+```
+4. (Optional) If embedding model load causes slow cold start set `DISABLE_HF_EMBED="true"`.
+5. Deploy; upload a sample PDF or include one in `samples/`.
+
+## Hugging Face Spaces Deploy (Alternative)
+See `README-deploy-hf.md` (Streamlit Space). Ensure `runtime.txt` pins Python.
+
+## Environment Flags Summary
+| Variable | Purpose | Suggested Cloud Value |
+|----------|---------|-----------------------|
+| USE_GEMINI | Use Gemini over local model | true |
+| LOCAL_LLM_SMALL | Force lightweight local fallback | true |
+| DISABLE_HF_EMBED | Skip HF embeddings -> hashing | false (true if startup fails) |
+| EMBED_MODEL | Embedding model id | intfloat/e5-small-v2 |
+| LOCAL_LLM_MODEL | Larger local model (if GPU) | Qwen/Qwen2.5-7B-Instruct |
+| CONFIDENCE_THRESHOLD | Filter low-risk flags | 65 |
+
+
 ## Hugging Face Spaces Deploy
 See `README-deploy-hf.md` for step-by-step. Create Streamlit Space, add secrets, push repo.
 

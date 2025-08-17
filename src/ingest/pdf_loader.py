@@ -58,6 +58,7 @@ def load_pdfs(uploaded_files) -> List[Document]:
                 except Exception:
                     pass
             pages_text.append(clean_text(txt))
-    combined = "\n".join(p for p in pages_text if p)
-    documents.append(Document(name=f.name, text=combined, pages=len(pages_text), pages_text=pages_text))
+        # Combine per-file (bug fix: this was previously outside the loop causing only last file kept)
+        combined = "\n".join(p for p in pages_text if p)
+        documents.append(Document(name=f.name, text=combined, pages=len(pages_text), pages_text=pages_text))
     return documents
