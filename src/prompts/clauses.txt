@@ -1,0 +1,8 @@
+Extract important legal clauses from the TEXT. Only use the provided text.
+Return one line per clause found with the format exactly:
+CLAUSE:<Clause Type>|EXPLANATION:<Plain language explanation (<=40 words)>|SNIPPET:<Exact snippet>|PAGE:<Approx page number integer>
+Target clause types to match from this list ONLY: {target_clauses}
+If none found, return nothing.
+
+TEXT:
+{text}

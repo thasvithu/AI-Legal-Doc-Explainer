@@ -1,0 +1,4 @@
+# Hugging Face Spacefile
+# Specifies the entrypoint command if needed (optional for Streamlit)
+[tool]
+entrypoint = "streamlit run app.py"

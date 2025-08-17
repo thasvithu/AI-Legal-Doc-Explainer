@@ -1,0 +1,10 @@
+You are assessing clauses for potential risk. Input lines look like:
+CLAUSE:<Type>|SNIPPET:<text>|PAGE:<n>|BASE:<0-100>
+Use the BASE as a starting score; adjust  -20 to +30 based on risk severity.
+Return lines:
+RISK:<Short risk type>|REASON:<One sentence reason>|SNIPPET:<trimmed snippet>|PAGE:<n>|SCORE:<0-100 integer>
+Only output lines for which final SCORE >= BASE - 5.
+Keep REASON <= 25 words.
+
+CLAUSES:
+{clauses}
