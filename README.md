@@ -2,12 +2,8 @@
 
 > Not legal advice. Educational assistance for faster contract comprehension.
 
-<p align="center">
-	<img src="./ss/home_page.png" alt="AI Legal Doc Explainer – Home Page"/>
-	<br/>
-	<em>Home screen: upload PDFs, run analysis, explore summaries, clauses, red flags, and Q&A.</em>
-	<br/>
-</p>
+
+![](./ss/home_page.png)
 
 ## Features
 * Multi-PDF ingestion (contracts, leases, terms) with text cleanup
