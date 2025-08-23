@@ -21,6 +21,7 @@ htmlcov/
 *.pdf
 !ARCHITECTURE.png
 !TECHNICAL_SUMMARY.pdf
+!ss/*.png
 
 .venv/
 build/
