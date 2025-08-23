@@ -2,8 +2,7 @@
 
 > Not legal advice. Educational assistance for faster contract comprehension.
 
-
-![](./ss/home_page.png)
+![](ss/home_page.png)
 
 ## Features
 * Multi-PDF ingestion (contracts, leases, terms) with text cleanup
