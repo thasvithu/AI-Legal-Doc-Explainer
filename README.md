@@ -2,6 +2,13 @@
 
 > Not legal advice. Educational assistance for faster contract comprehension.
 
+<p align="center">
+	<img src="ss/home_page.png" alt="AI Legal Doc Explainer – Home Page" width="900" />
+	<br/>
+	<em>Home screen: upload PDFs, run analysis, explore summaries, clauses, red flags, and Q&A.</em>
+	<br/>
+</p>
+
 ## Features
 * Multi-PDF ingestion (contracts, leases, terms) with text cleanup
 * Map-reduce plain-language summarization (5–10 bullets per doc)
